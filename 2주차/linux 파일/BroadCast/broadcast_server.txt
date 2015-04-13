@@ -1,0 +1,44 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include <errno.h>
+# define BUFSIZE 1024
+main (int argc, char *argv[])
+{
+   int sd;
+   struct sockaddr_in s_addr;
+   char sndBuffer[BUFSIZE];
+   int n, n_send, status;
+
+   int on = 1;
+
+
+   sd = socket (AF_INET, SOCK_DGRAM, 0);
+
+   bzero(&s_addr, sizeof(s_addr));
+   s_addr.sin_family = AF_INET;
+   s_addr.sin_addr.s_addr = inet_addr("192.168.42.255");
+   s_addr.sin_port = htons(2007);
+
+   if((status = setsockopt(sd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on))) != 0 )
+   {
+      printf("setsockopt error\n");
+      exit(-1);
+   }
+
+   while(1)
+   {
+      strcpy(sndBuffer,"Broadcasting~~~");
+      if ((n_send = sendto(sd, sndBuffer, strlen(sndBuffer), 0, (struct sockaddr *)&s_addr, sizeof(s_addr))) < 0 ) {
+         fprintf(stderr, "sendto() error");
+         exit(-3);
+      }
+
+   }
+   close(sd);
+}

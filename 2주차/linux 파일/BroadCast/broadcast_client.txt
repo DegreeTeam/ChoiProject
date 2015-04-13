@@ -1,0 +1,32 @@
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <string.h>
+
+#define SIZE sizeof(struct sockaddr_in)
+#define MSGSIZE 1024
+
+main()
+{
+        int sockfd;
+        char recv[MSGSIZE];
+
+        struct sockaddr_in client;
+
+        int server_len = SIZE;
+        struct sockaddr_in server;
+        server.sin_family = AF_INET;
+        server.sin_port = htons(2007);
+        server.sin_addr.s_addr = htonl(INADDR_ANY);
+
+        sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+        bind(sockfd, (struct sockaddr *)&server, sizeof(server));
+while(1) {
+        recvfrom(sockfd, &recv, MSGSIZE, 0, (struct sockaddr *)&client, &server_len);
+        printf("braodcast from server : %s\n",recv);
+}
+        close(sockfd);
+}
+
