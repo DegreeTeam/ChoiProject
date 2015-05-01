@@ -27,7 +27,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	
 	AudioSynthesisTask audioSynth;
 	boolean keepGoing = false;
-	private byte[] recvBuf= new byte[44100];
+	private byte[] recvBuf= new byte[4800];
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
