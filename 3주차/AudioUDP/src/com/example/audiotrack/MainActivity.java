@@ -27,7 +27,8 @@ public class MainActivity extends Activity implements OnClickListener {
 	
 	AudioSynthesisTask audioSynth;
 	boolean keepGoing = false;
-	private byte[] recvBuf = new byte[44100];
+	private byte[] recvBuf;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -74,24 +75,31 @@ public class MainActivity extends Activity implements OnClickListener {
 		protected Void doInBackground(Void... params) {
 
 			final int SAMPLE_RATE = 44100;
-
-		     Client c = new Client();
-		        new Thread(c).start(); 
-		        Log.i("client", "»ý¼ºÀÚ");
+			
 			int minSize = AudioTrack.getMinBufferSize(SAMPLE_RATE,
-					AudioFormat.CHANNEL_CONFIGURATION_MONO,
+					AudioFormat.CHANNEL_CONFIGURATION_STEREO,
 					AudioFormat.ENCODING_PCM_8BIT);
 
+		//	recvBuf = new byte[minSize*4];
+			recvBuf = new byte[44];	
+		    Client c = new Client();
+		        new Thread(c).start(); 
+		        
 			AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-					SAMPLE_RATE, AudioFormat.CHANNEL_CONFIGURATION_MONO,
-					AudioFormat.ENCODING_PCM_8BIT, minSize,
+					SAMPLE_RATE, AudioFormat.CHANNEL_CONFIGURATION_STEREO,
+					AudioFormat.ENCODING_PCM_8BIT, minSize*4,
 					AudioTrack.MODE_STREAM);
 
 			audioTrack.play();
-
+		
 		while (keepGoing) {
 					audioTrack.write(recvBuf , 0, recvBuf .length);
 		//			Arrays.fill(recvBuf,(byte)0);
+					String str = new String();
+					for(int i=0; i<recvBuf.length;i++)
+						str += recvBuf[i] + " ";
+						
+					Log.v("log", str);	
 			}
 		return null;
 	}
@@ -130,6 +138,11 @@ public class MainActivity extends Activity implements OnClickListener {
 			
 			     	Log.d("UDP", "C: Received: " + recvBuf);
 			     
+			     	byte[] by = packet.getData();
+			     	String str = new String();
+			     	for(int i=0;i<by.length;i++)
+			     		str += by[i]+" ";
+			     	Log.v("log", str);
 		            socket.close();
 		  		}catch (Exception e) {   
 		  			socket.close();
