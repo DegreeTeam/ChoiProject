@@ -27,7 +27,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	
 	AudioSynthesisTask audioSynth;
 	boolean keepGoing = false;
-	private byte[] recvBuf;
+	private byte[] recvBuf= new byte[44100];
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -74,44 +74,29 @@ public class MainActivity extends Activity implements OnClickListener {
 		@Override
 		protected Void doInBackground(Void... params) {
 
-			final int SAMPLE_RATE = 44100;
-			
-			int minSize = AudioTrack.getMinBufferSize(SAMPLE_RATE,
-					AudioFormat.CHANNEL_CONFIGURATION_STEREO,
-					AudioFormat.ENCODING_PCM_8BIT);
-
-		//	recvBuf = new byte[minSize*4];
-			recvBuf = new byte[44];	
 		    Client c = new Client();
-		        new Thread(c).start(); 
+		    new Thread(c).start(); 
 		        
-			AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-					SAMPLE_RATE, AudioFormat.CHANNEL_CONFIGURATION_STEREO,
-					AudioFormat.ENCODING_PCM_8BIT, minSize*4,
-					AudioTrack.MODE_STREAM);
-
-			audioTrack.play();
-		
-		while (keepGoing) {
-					audioTrack.write(recvBuf , 0, recvBuf .length);
-		//			Arrays.fill(recvBuf,(byte)0);
-					String str = new String();
-					for(int i=0; i<recvBuf.length;i++)
-						str += recvBuf[i] + " ";
-						
-					Log.v("log", str);	
-			}
-		return null;
+		    return null;
 	}
 	
-
 	 }
 	class Client implements Runnable  {
 		 
 		 public static final String SERVER_NAME = "0.0.0.0";
 		 public static final int SERVERPORT = 2007;
 		 SocketAddress socketAddr =new InetSocketAddress(SERVERPORT); 
-
+		 
+		final int SAMPLE_RATE = 44100;
+		
+		int minSize = AudioTrack.getMinBufferSize(SAMPLE_RATE,
+				AudioFormat.CHANNEL_CONFIGURATION_MONO,
+				AudioFormat.ENCODING_PCM_8BIT);
+		
+		AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+					SAMPLE_RATE, AudioFormat.CHANNEL_CONFIGURATION_MONO,
+					AudioFormat.ENCODING_PCM_8BIT, minSize,
+					AudioTrack.MODE_STREAM);
 		@Override
 		 public void run() {
 		  // TODO Auto-generated method stub
@@ -135,14 +120,13 @@ public class MainActivity extends Activity implements OnClickListener {
 			  		}
 			     	DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
 			    	socket.receive(packet);
-			
+			    	
+			   
+			    	audioTrack.play();
+			    	audioTrack.write(recvBuf , 0, recvBuf .length);
+			    	 	
 			     	Log.d("UDP", "C: Received: " + recvBuf);
-			     
-			     	byte[] by = packet.getData();
-			     	String str = new String();
-			     	for(int i=0;i<by.length;i++)
-			     		str += by[i]+" ";
-			     	Log.v("log", str);
+	
 		            socket.close();
 		  		}catch (Exception e) {   
 		  			socket.close();
