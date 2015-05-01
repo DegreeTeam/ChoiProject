@@ -28,7 +28,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	AudioSynthesisTask audioSynth;
 	boolean keepGoing = false;
 	private byte[] recvBuf= new byte[44100];
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -76,7 +76,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		    Client c = new Client();
 		    new Thread(c).start(); 
-		        
+		       
 		    return null;
 	}
 	
@@ -101,7 +101,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		 public void run() {
 		  // TODO Auto-generated method stub
 		        try {   
-		        		while(true)
+		        		while(keepGoing)
 		        			UDPsendRecv();
 		        }catch (Exception e) {   
 		        		Log.e("UDP", "C: Error", e);   
@@ -121,7 +121,6 @@ public class MainActivity extends Activity implements OnClickListener {
 			     	DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
 			    	socket.receive(packet);
 			    	
-			   
 			    	audioTrack.play();
 			    	audioTrack.write(recvBuf , 0, recvBuf .length);
 			    	 	
