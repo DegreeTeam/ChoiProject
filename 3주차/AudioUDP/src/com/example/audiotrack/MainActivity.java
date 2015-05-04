@@ -1,15 +1,12 @@
 package com.example.audiotrack;
 
-import java.lang.reflect.Array;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.nio.channels.DatagramChannel;
-import java.util.Arrays;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -24,16 +21,12 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	Button startSound;
 	Button endSound;
-	
-	AudioSynthesisTask audioSynth;
-	boolean keepGoing = false;
-	private byte[] recvBuf= new byte[4800];
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-  
+
 		startSound = (Button) this.findViewById(R.id.StartSound);
 		startSound.setOnClickListener(this);
 
@@ -42,95 +35,41 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		endSound.setEnabled(false);
 	}
-
-	@Override
-	public void onPause() {
-		super.onPause();
-		keepGoing = false;
-
-		endSound.setEnabled(false);
-		startSound.setEnabled(true);
-	}
-
+    public void onResume(){
+    	startServiceMethod();
+    	super.onResume();
+    }
 	public void onClick(View v) {
+		
+	    Intent Service = new Intent(this, MainService.class);
+	    
 		if (v == startSound) {
-			keepGoing = true;
-
-			audioSynth = new AudioSynthesisTask();
-			audioSynth.execute();
-
-			endSound.setEnabled(true);
+			Service.putExtra("keepgoing", true);
+			startService(Service);
+		    endSound.setEnabled(true);
 			startSound.setEnabled(false);
+			
 		} else if (v == endSound) {
-			keepGoing = false;
+	//		stopServiceMethod();
 
+			Service.putExtra("keepgoing", false);
+			startService(Service);
 			endSound.setEnabled(false);
 			startSound.setEnabled(true);
 		}
 	}
-
-	private class AudioSynthesisTask extends AsyncTask<Void, Void, Void> {
-
-		@Override
-		protected Void doInBackground(Void... params) {
-
-		    Client c = new Client();
-		    new Thread(c).start(); 
-		       
-		    return null;
+	public void startServiceMethod(){
+		 Intent Service = new Intent(this, MainService.class);
+	     startService(Service);
 	}
 	
-	 }
-	class Client implements Runnable  {
-		 
-		 public static final String SERVER_NAME = "0.0.0.0";
-		 public static final int SERVERPORT = 2007;
-		 SocketAddress socketAddr =new InetSocketAddress(SERVERPORT); 
-		 
-		final int SAMPLE_RATE = 44100;
-		
-		int minSize = AudioTrack.getMinBufferSize(SAMPLE_RATE,
-				AudioFormat.CHANNEL_CONFIGURATION_MONO,
-				AudioFormat.ENCODING_PCM_8BIT);
-		
-		AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-					SAMPLE_RATE, AudioFormat.CHANNEL_CONFIGURATION_MONO,
-					AudioFormat.ENCODING_PCM_8BIT, minSize,
-					AudioTrack.MODE_STREAM);
-		@Override
-		 public void run() {
-		  // TODO Auto-generated method stub
-		        try {   
-		        		while(keepGoing)
-		        			UDPsendRecv();
-		        }catch (Exception e) {   
-		        		Log.e("UDP", "C: Error", e);   
-		        } 
-		 }
-		 
-		 public void UDPsendRecv() throws Exception
-		 {
-
-		  DatagramSocket socket = null ;
-		  try {
-			  		if(socket == null) {
-			  			 socket = new DatagramSocket(SERVERPORT);
-			   			 socket.setBroadcast(true);
-			  			 socket.setReuseAddress(true);
-			  		}
-			     	DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
-			    	socket.receive(packet);
-			    	
-			    	audioTrack.play();
-			    	audioTrack.write(recvBuf , 0, recvBuf .length);
-			    	 	
-			     	Log.d("UDP", "C: Received: " + recvBuf);
-	
-		            socket.close();
-		  		}catch (Exception e) {   
-		  			socket.close();
-			  		throw e;
-		  		} 
-		 }
+	public void stopServiceMethod(){
+	    Intent Service = new Intent(this, MainService.class);
+	    stopService(Service);
 	}
+	public void onDestroy(){
+		stopServiceMethod();
+		super.onDestroy();
+	}
+
 }
