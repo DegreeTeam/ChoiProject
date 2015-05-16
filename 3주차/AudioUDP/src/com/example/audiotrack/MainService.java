@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -19,16 +20,16 @@ public class MainService extends Service{
 	public static final int SERVERPORT = 2007;
 	SocketAddress socketAddr = new InetSocketAddress(SERVERPORT);
 	Boolean KeepGoing = false;
-	final int SAMPLE_RATE = 44100;
+	final int SAMPLE_RATE = 32768;
 	int minSize = AudioTrack.getMinBufferSize(SAMPLE_RATE,
 			AudioFormat.CHANNEL_CONFIGURATION_MONO,
 			AudioFormat.ENCODING_PCM_8BIT);
 	AudioTrack audioTrack =new AudioTrack(AudioManager.STREAM_MUSIC,
 			SAMPLE_RATE, AudioFormat.CHANNEL_CONFIGURATION_MONO,
 			AudioFormat.ENCODING_PCM_8BIT, minSize, AudioTrack.MODE_STREAM);;
-
     @Override
     public void onCreate() { 	
+
     	Client c = new Client();
 		new Thread(c).start();
 		audioTrack.play();

@@ -1,18 +1,8 @@
 package com.example.audiotrack;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-
 import android.app.Activity;
 import android.content.Intent;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -36,7 +26,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		endSound.setEnabled(false);
 	}
     public void onResume(){
-    	startServiceMethod();
+	     startService(new Intent(this, MainService.class));
     	super.onResume();
     }
 	public void onClick(View v) {
@@ -50,7 +40,6 @@ public class MainActivity extends Activity implements OnClickListener {
 			startSound.setEnabled(false);
 			
 		} else if (v == endSound) {
-	//		stopServiceMethod();
 
 			Service.putExtra("keepgoing", false);
 			startService(Service);
@@ -58,17 +47,9 @@ public class MainActivity extends Activity implements OnClickListener {
 			startSound.setEnabled(true);
 		}
 	}
-	public void startServiceMethod(){
-		 Intent Service = new Intent(this, MainService.class);
-	     startService(Service);
-	}
 	
-	public void stopServiceMethod(){
-	    Intent Service = new Intent(this, MainService.class);
-	    stopService(Service);
-	}
 	public void onDestroy(){
-		stopServiceMethod();
+	    stopService(new Intent(this, MainService.class));
 		super.onDestroy();
 	}
 
