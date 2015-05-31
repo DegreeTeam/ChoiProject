@@ -1,5 +1,8 @@
 package com.example.manager_ui;
 
+import java.io.DataOutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,16 +13,16 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -32,17 +35,24 @@ public class MainActivity extends Activity {
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
     private WifiManager wManager = null;
- 
+    BLEArr bldevice;
+    private EditText edittext1,edittext2,edittext3,edittext4;
+    private RadioButton rbutton1, rbutton2,rbutton3;
+    String editstr;
+
     class BLEArr{
-    	
+   
     	BluetoothDevice device;
     	int rssi;
-    	String uuid;
+    	String uuid; 
     	
     	void setdevice (BluetoothDevice device, int rssi, String uuid){
     		device = device;
     		rssi = rssi;
     		uuid = uuid;
+    	}
+    	String getUUid(){
+    		return uuid;
     	}
     }
     @Override
@@ -51,7 +61,17 @@ public class MainActivity extends Activity {
         
     	  mHandler = new Handler();
           setContentView(R.layout.activity_main);
-    
+          
+          edittext1 =  (EditText) findViewById(R.id.editText1);
+          edittext2 =  (EditText) findViewById(R.id.editText2);
+          edittext3 =  (EditText) findViewById(R.id.editText3);
+          edittext4 =  (EditText) findViewById(R.id.editText4);
+          rbutton1 = (RadioButton) findViewById(R.id.radioButton1);
+          rbutton2 = (RadioButton) findViewById(R.id.radioButton2);
+          rbutton3 = (RadioButton) findViewById(R.id.radioButton3);
+          
+       
+          
           if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
               Toast.makeText(this, "ble_not_supported", Toast.LENGTH_SHORT).show();
               finish();
@@ -66,20 +86,43 @@ public class MainActivity extends Activity {
               finish();
               return;
           }
-          setContentView(R.layout.activity_main);
+   
           scanLeDevice(true);
-          connectwifi();
     }   
 	public void onClick(View v) {
+		editstr = new String();
 		switch (v.getId()) {
-		case R.id.button1:
+		case R.id.button1: 
+			editstr = "1" + edittext1.getText().toString();
+		    new Thread(new Client(editstr)).start(); 
+	
 			break;
-		case R.id.button2:
+		case R.id.Button2:
+			editstr = "2" + edittext2.getText().toString();
+		    new Thread(new Client(editstr)).start(); 
+	
 			break;
-		case R.id.button3:
+		case R.id.Button3:
+			editstr = "3" + edittext3.getText().toString();
+		    new Thread(new Client(editstr)).start(); 
+	      
 			break;
-		case R.id.button4:
+		case R.id.Button4:
+			editstr = "4" + edittext4.getText().toString();
+		    new Thread(new Client(editstr)).start(); 
+
 			break;
+		case R.id.Button5:
+			editstr = "5";
+			if(rbutton1.isChecked())
+				editstr += "1";
+			else if (rbutton2.isChecked())
+				editstr += "2";
+			else
+				editstr += "3";	
+		    new Thread(new Client(editstr)).start(); 
+			break;
+
 		}
 	}
     @Override
@@ -87,7 +130,6 @@ public class MainActivity extends Activity {
         super.onResume();
         mLeDevices = new ArrayList<BLEArr>();
         scanLeDevice(true);
-        connectwifi();
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -132,13 +174,16 @@ public class MainActivity extends Activity {
         public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
  	
          	final String uuid = getUid(device,scanRecord);
+         	
          	final int Rssi = rssi;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                	BLEArr bldevice = new BLEArr();
+                	connectwifi(uuid);
+                	bldevice = new BLEArr();
                     bldevice.setdevice(device, Rssi, uuid);
-                    Log.i("BLEArr",uuid);
+                    
+                    //Log.i("device",device.getName());
                 }
             });
       
@@ -159,7 +204,7 @@ public class MainActivity extends Activity {
     String getUid (BluetoothDevice device, byte[] scanRecord){
     	int startByte = 2;
         boolean patternFound = false;
-        String uuid =new String();
+         String uuid =new String();
         while (startByte <= 5) {
             if (((int) scanRecord[startByte + 2] & 0xff) == 0x02 && //Identifies an iBeacon
                 ((int) scanRecord[startByte + 3] & 0xff) == 0x15) { //Identifies correct data length
@@ -187,10 +232,11 @@ public class MainActivity extends Activity {
             //Here is your Minor value
             int minor = (scanRecord[startByte+22] & 0xff) * 0x100 + (scanRecord[startByte+23] & 0xff);
         }
+      
 		return uuid;
     }
-    void connectwifi(){
-   
+    void connectwifi(String uuid){
+    	Log.i("bleuuid", uuid);
     	// 해당 AP로 연결하기 
     	String ssid = "degree123";
     	String password = "degree123";
@@ -255,5 +301,37 @@ public class MainActivity extends Activity {
 		}
 		manager.enableNetwork(networkId, true);
 	}
-}
+	class Client implements Runnable {
+		
+		protected static final String SERVIP = "192.168.42.1"; // server ip
+		protected static final int PORT = 2012;
+		String sendstr= new String();
 
+		Client(String str){
+			sendstr = str;
+		}
+		private Handler handler = new Handler() {
+			public void handleMessage(Message msg) {
+		        Toast.makeText(getApplicationContext(), "OK", 0).show();
+			super.handleMessage(msg);
+		}};
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			try {
+				Log.d("TCP", "server connecting");
+				InetAddress serverAddr = InetAddress.getByName(SERVIP);
+				Socket sock = new Socket(serverAddr, PORT);
+				DataOutputStream output = new DataOutputStream(sock.getOutputStream());
+				byte[] datafile = new byte[32];
+			    datafile =sendstr.getBytes(); 
+			    output.write(datafile);
+		        sock.close();
+		        handler.sendEmptyMessage(0);
+			} catch (Exception e) {
+				Log.e("TCP", "C: Error", e);
+			}
+		}
+	
+	}
+}

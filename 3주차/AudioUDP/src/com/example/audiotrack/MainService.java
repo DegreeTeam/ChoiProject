@@ -92,7 +92,6 @@ public class MainService extends Service{
 
 				socket.receive(packet);
 				audioTrack.write(recvBuf, 0, recvBuf.length);
-
 				Log.d("UDP", "C: Received: " + recvBuf);
 
 				socket.close();
